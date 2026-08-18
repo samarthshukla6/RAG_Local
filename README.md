@@ -1,50 +1,61 @@
 # HealthXAI — Local RAG Medical Assistant
 
-A Next.js app for medical Q&A powered by **local Ollama models**, with optional **PDF context** (text-based and scanned via OCR).
+Next.js app for medical Q&A with **local Ollama models** and optional **PDF context** (text + OCR for scanned documents).
 
-## Features
+## Stack
 
-- Chat with local Ollama models (llama3.2, DeepSeek, etc.)
-- Upload PDFs for document-grounded answers
-- Automatic OCR for scanned/image PDFs (Tesseract.js)
-- Auto-detects installed Ollama models
-- In-app setup hints when Ollama isn't running
+- **Next.js 16** · **React 19** · **TypeScript**
+- **Tailwind CSS v4**
+- **Ollama** + LangChain Ollama integration
+- **pdf-parse** + **Tesseract.js** for document extraction
 
-## Prerequisites
+## Project structure
 
-- [Node.js](https://nodejs.org/) 20+
-- [Ollama](https://ollama.com/)
+```
+app/
+  layout.tsx          # Root layout
+  page.tsx            # Main page (thin shell)
+  api/
+    ollama/models/    # List installed models
+    ragchat/          # Chat + PDF RAG endpoint
+components/
+  chat/               # Chat UI components
+  sidebar/            # Model selector, PDF upload, setup
+hooks/
+  useChat.ts          # Chat state & API calls
+  useOllamaModels.ts  # Model discovery
+lib/
+  ai/                 # Ollama client, prompts, config
+  pdf/                # PDF text extraction + OCR
+  utils/              # Shared helpers
+types/                # Shared TypeScript types
+constants/            # Static config & prompts
+```
 
 ## Setup
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Start Ollama (separate terminal)
-ollama serve
-
-# 3. Pull a model
+ollama serve              # separate terminal
 ollama pull llama3.2
-
-# 4. Run the app
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Environment
-
-Copy `.env.copy` to `.env` and add any API keys if using optional routes (Pinecone, Google AI, etc.). The main chat flow only requires Ollama.
-
 ## Scripts
 
-| Command        | Description          |
-|----------------|----------------------|
-| `npm run dev`  | Start dev server     |
-| `npm run build`| Production build     |
-| `npm run start`| Start production     |
-| `npm run lint` | Run ESLint           |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript check |
+
+## Environment
+
+Optional: set `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`).
 
 ## Disclaimer
 
