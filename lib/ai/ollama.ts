@@ -1,4 +1,3 @@
-import { Ollama } from "@langchain/ollama";
 import { OLLAMA_BASE_URL } from "@/lib/ai/config";
 import { buildContextBlock, getSystemPrompt } from "@/lib/ai/prompts";
 import { stripThinkingTags } from "@/lib/utils/text";
@@ -60,15 +59,44 @@ export async function streamOllamaResponse({
   question,
   documentText,
 }: StreamChatInput): Promise<string> {
-  const llm = new Ollama({ model, baseUrl: OLLAMA_BASE_URL });
   const systemMessage = getSystemPrompt(Boolean(documentText));
   const contextBlock = buildContextBlock(question, documentText);
   const prompt = `${systemMessage}\n\n${contextBlock}\n\nAssistant:`;
 
+  const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, prompt, stream: true }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || `Ollama request failed (${response.status})`);
+  }
+
+  if (!response.body) {
+    throw new Error("Ollama returned an empty response.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
   let fullResponse = "";
-  const stream = await llm.stream(prompt);
-  for await (const chunk of stream) {
-    fullResponse += chunk;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    for (const line of chunk.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const parsed = JSON.parse(trimmed) as { response?: string };
+        if (parsed.response) fullResponse += parsed.response;
+      } catch {
+        // Ignore partial JSON lines from the stream.
+      }
+    }
   }
 
   return stripThinkingTags(fullResponse);

@@ -1,0 +1,11 @@
+{
+  "buildCommand": "next build --webpack",
+  "installCommand": "npm ci",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/ragchat/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}

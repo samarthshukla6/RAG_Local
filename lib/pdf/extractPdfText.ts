@@ -1,5 +1,6 @@
 import fs from "fs";
-import Tesseract from "tesseract.js";
+import os from "os";
+import path from "path";
 import { MAX_PDF_CONTEXT_CHARS } from "@/lib/ai/config";
 import { truncateText } from "@/lib/utils/text";
 import { ensurePdfWorker, resetPdfWorker, PDFParse } from "./pdfParse";
@@ -13,6 +14,8 @@ export interface ExtractPdfResult extends PdfMeta {
 }
 
 async function ocrFromBuffer(buffer: Buffer): Promise<string> {
+  const Tesseract = (await import("tesseract.js")).default;
+
   resetPdfWorker();
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
 
@@ -61,10 +64,16 @@ export async function extractPdfText(filePath: string): Promise<ExtractPdfResult
 
 export async function extractPdfFromBase64(base64: string): Promise<ExtractPdfResult> {
   const buffer = Buffer.from(base64, "base64");
-  const uploadDir = "public";
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-  const filePath = `${uploadDir}/file_${Date.now()}.pdf`;
+  const filePath = path.join(os.tmpdir(), `healthxai-${Date.now()}.pdf`);
   fs.writeFileSync(filePath, buffer);
-  return extractPdfText(filePath);
+
+  try {
+    return await extractPdfText(filePath);
+  } finally {
+    try {
+      fs.unlinkSync(filePath);
+    } catch {
+      // Temp file cleanup is best-effort.
+    }
+  }
 }
