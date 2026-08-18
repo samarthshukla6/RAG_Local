@@ -4,7 +4,10 @@
 
 ![HealthXAI dashboard](https://github.com/user-attachments/assets/202c1b88-5211-4735-81d1-ad41a308a0a8)
 
+> **Live demo:** [rag-local-samarth-shuklas-projects-ea712626.vercel.app](https://rag-local-samarth-shuklas-projects-ea712626.vercel.app)  
 > **Repository:** [github.com/samarthshukla6/RAG_Local](https://github.com/samarthshukla6/RAG_Local)
+
+> **Note:** The deployed demo hosts the UI only. Chat and PDF RAG require Ollama running on your machine (`npm run dev` locally) or a remote Ollama server with `OLLAMA_BASE_URL` set in Vercel.
 
 ---
 
@@ -48,7 +51,7 @@
 | Technology | Role |
 |------------|------|
 | [Ollama](https://ollama.com) | Local LLM runtime (Llama, DeepSeek, etc.) |
-| [@langchain/ollama](https://js.langchain.com) | LangChain wrapper for Ollama streaming |
+| Ollama HTTP API | Direct `/api/generate` streaming (no cloud SDK) |
 | [pdf-parse](https://www.npmjs.com/package/pdf-parse) | PDF text extraction (pdf.js under the hood) |
 | [Tesseract.js](https://tesseract.projectnaptha.com) | OCR for scanned/image PDFs |
 | [Next.js Route Handlers](https://nextjs.org/docs/app/building-your-application/routing/route-handlers) | REST API (`/api/ragchat`, `/api/ollama/models`) |
@@ -58,7 +61,7 @@
 | Tool | Role |
 |------|------|
 | ESLint 9 (flat config) | Linting with `eslint-config-next` |
-| Turbopack | Dev and production bundler (Next.js 16 default) |
+| Turbopack / Webpack | Turbopack for dev; Webpack for production builds (Vercel) |
 | GitHub Actions | CI — typecheck, lint, build |
 
 ---
@@ -213,7 +216,7 @@ cp .env.example .env
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Development server (Turbopack) |
-| `npm run build` | Production build |
+| `npm run build` | Production build (Webpack) |
 | `npm run start` | Start production server |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` | ESLint |
@@ -241,9 +244,19 @@ On Apple Silicon (M1/M2/M3), Ollama uses Metal GPU acceleration automatically.
 
 ---
 
-## Deployment note
+## Deployment
 
-This app is designed for **local use** with Ollama on the same machine. Deploying to Vercel/Netlify requires a reachable Ollama instance (e.g. on a VPS) and setting `OLLAMA_BASE_URL` accordingly. PDF/OCR processing adds cold-start time on serverless platforms.
+**Live:** [https://rag-local-samarth-shuklas-projects-ea712626.vercel.app](https://rag-local-samarth-shuklas-projects-ea712626.vercel.app) (Vercel)
+
+This app is designed for **local use** with Ollama on the same machine. The Vercel deployment serves the frontend and API routes, but Ollama defaults to `http://127.0.0.1:11434` — which only works when Ollama runs on the same host as the server (i.e. your laptop via `npm run dev`).
+
+To enable chat on the live deployment:
+
+1. Run Ollama on a reachable server (VPS, Railway, Fly.io, etc.).
+2. Set `OLLAMA_BASE_URL` in Vercel → Project → Settings → Environment Variables.
+3. Redeploy.
+
+PDF/OCR processing adds cold-start time on serverless platforms. See `vercel.json` for function memory and timeout settings.
 
 ---
 
